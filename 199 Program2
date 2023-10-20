@@ -1,0 +1,177 @@
+//I didn't make text boxes for the health/car/total payments at the bottoms, I just made a message box lol
+//Keep in mind the radio buttons don't work entirely, so those sections have some minor discrepancies
+
+
+
+//S2303
+//19OCT2023
+//Program2
+//This program provides calculation services for college students regarding their different types of insurance, driving record, and health status. 
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+
+namespace Program2
+{
+    public partial class Program2 : Form
+    {
+        private const decimal HealthBaseRate = 500.00m;
+        private const decimal CarFullCoverageBaseRate = 1000.00m;
+        private const decimal CarLiabilityCoverageBaseRate = 800.00m;
+        private GroupBox radioGroupBox;
+        private RadioButton smokerRadioButton;
+        private RadioButton notSmokerRadioButton;
+        private RadioButton noAccidentRadioButton;
+        private RadioButton accidentRadioButton;
+        public Program2()
+        {
+            InitializeComponent();
+            healthComboBox.Items.AddRange(new object[] { "Medical", "Dental", "Vision" });
+            carComboBox.Items.AddRange(new object[] { "Full Coverage", "Liability" });
+        }
+
+        private void calculateButton_Click(object sender, EventArgs e)
+        {
+            //Reads and validates the user's input age
+            if (!int.TryParse(ageInput.Text, out int age) || age < 15)
+            {
+                MessageBox.Show("Please enter a valid age (>=15).");
+                return;
+            }
+
+            //Reads and validates the user's input car value
+            if (!int.TryParse(carValueInput.Text, out int carValue))
+            {
+                MessageBox.Show("Please enter a valid car value.");
+                return;
+            }
+
+            //Checks and validates if an insurance type is selected by the user
+            if (healthComboBox.SelectedIndex < 0 || carComboBox.SelectedIndex < 0)
+            {
+                MessageBox.Show("Please select insurance type(s).");
+                return;
+            }
+
+            // This is the main group for the 'Smoker' radio buttons
+            {
+                GroupBox radioGroupBox = new GroupBox();
+                radioGroupBox.Text = "Smoker?";
+                radioGroupBox.Location = new System.Drawing.Point(112, 269);
+                radioGroupBox.Size = new System.Drawing.Size(119, 60);
+
+                // This is where I am creating the buttons
+                RadioButton smokeYesButton = new RadioButton();
+                smokeYesButton.Text = "Smoker";
+                smokeYesButton.Location = new System.Drawing.Point(440, 254);
+
+                RadioButton smokeNoButton = new RadioButton();
+                smokeNoButton.Text = "Non-Smoker";
+                smokeNoButton.Location = new System.Drawing.Point(440, 285);
+
+                radioGroupBox.Controls.Add(smokeYesButton);
+                radioGroupBox.Controls.Add(smokeNoButton);
+
+                this.Controls.Add(radioGroupBox);
+            }
+
+            // This is the main group for the 'Accident' radio buttons
+            {
+                GroupBox radioGroupBox2 = new GroupBox();
+                radioGroupBox2.Text = "Car Accident?";
+                radioGroupBox2.Location = new System.Drawing.Point(112, 199);
+                radioGroupBox2.Size = new System.Drawing.Size(185, 60);
+
+                // This is where I am creating the buttons
+                RadioButton yesCarAccidentButton = new RadioButton();
+                yesCarAccidentButton.Text = "Accident";
+                yesCarAccidentButton.Location = new System.Drawing.Point(440, 326);
+
+                RadioButton noCarAccidentButton = new RadioButton();
+                noCarAccidentButton.Text = "No Accident";
+                noCarAccidentButton.Location = new System.Drawing.Point(440, 357);
+
+                radioGroupBox2.Controls.Add(yesCarAccidentButton);
+                radioGroupBox2.Controls.Add(noCarAccidentButton);
+
+                this.Controls.Add(radioGroupBox2);
+            }
+
+            //Checking wether or not the user is a smoker and has been in an accident in the last year
+            bool isSmoker = smokeYesButton.Checked;
+            bool hasAccident = yesCarAccidentButton.Checked;
+
+            //This calculates the user's health premiium, regardless of smoker/accident status
+            decimal healthPremium = CalculateHealthCostOutput(healthComboBox.Text, isSmoker);
+
+            //This calculates the car insurance cost
+            decimal carPremium = CalculateCarCostOutput(carComboBox.Text, carValue, hasAccident, age);
+
+            //This calculates the total cost based off the car cost and health cost
+            decimal totalPremium = healthPremium + carPremium;
+
+            //Assigning totals and presenting results
+            MessageBox.Show($"Health Insurance Premium: {healthPremium:C}\n" +
+                            $"Car Insurance Premium: {carPremium:C}\n" +
+                            $"Total Premium: {totalPremium:C}",
+                            "Insurance Calculator Results");
+
+            decimal CalculateHealthCostOutput(string coverageType, bool doesSmoke)
+            {
+                decimal baseRate = HealthBaseRate;
+
+                if (coverageType.Equals("Medical") && isSmoker)
+                {
+                    baseRate += 70.00m;
+                }
+
+                return baseRate;
+            }
+
+            //Assigning results
+
+            decimal CalculateCarCostOutput(string coverageType, int carWorth, bool inCollision, int userAge)
+            {
+                decimal baseRate = 0;
+
+                switch (coverageType)
+                {
+                    case "Full Coverage":
+                        baseRate = CarFullCoverageBaseRate;
+                        break;
+                    case "Liability":
+                        baseRate = CarLiabilityCoverageBaseRate;
+                        break;
+                }
+
+                //Cars valued less than 15000 decrease the rate by 12%
+                if (carValue < 15000)
+                {
+                    baseRate *= 0.88m; 
+                }
+
+                //Accidents increase the rate by 20%
+                if (hasAccident)
+                {
+                    baseRate *= 1.2m; 
+                }
+
+                //Charge for students younger than 21 years old
+                if (age < 21)
+                {
+                    baseRate += 25.00m; 
+                }
+
+                return baseRate;
+            }
+        }
+    }
+           
+}
